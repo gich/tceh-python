@@ -1,0 +1,15 @@
+What is the output for the following command: print("123" + "456")
+123456;1
+123+456;
+579;
+It's not possible to add strings;
+What is the output for the following command: print("17" * 4)
+error occurs;
+174;
+68;
+none from above;1
+We want to print out "12345" to console. Which statement is correct?
+print ("12345");
+print (12345);
+print "12345";
+all of them;1

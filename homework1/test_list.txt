@@ -1,2 +1,2 @@
-Types in Python;types.txt
-Strings in Python;strings.txt
+Types in Python;tests/types.txt
+Strings in Python;tests/strings.txt
