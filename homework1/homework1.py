@@ -24,6 +24,11 @@ def run_test(file_name):
                 print 'You have {} correct answer(s)'.format(result)
             else:
                 print 'Incorrect answer.'
+    if result == total:
+        print "Excellent! You have no mistakes!"
+    else:
+        print 'You have {} correct answer(s)' \
+              ' for {} questions in total'.format(result, total)
     return result, total
 
 
@@ -62,12 +67,6 @@ while True:
     elif quiz_num in test_dict:
         print 'You select "{}".'.format(test_dict[quiz_num]['test_name'])
         res, tot = run_test(test_dict[quiz_num]['test_file'])
-        if res == tot:
-            print "Excellent! You have no mistakes!"
-        else:
-            print 'You have {} correct answer(s)' \
-                  ' for {} questions in total'.format(res, tot)
-
         log_result(name, test_dict[quiz_num]['test_name'], res, tot)
         first_run = False
     else:
