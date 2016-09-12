@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# `random` module is used to shuffle field, see§:
+# random module is used to shuffle field, see§:
 # https://docs.python.org/3/library/random.html#random.shuffle
 import random
 import sys
@@ -26,10 +26,20 @@ def shuffle_field():
     one of which is a empty space.
     """
 
-    field = list(range(1, 17))
-    field[15] = EMPTY_MARK
-    random.shuffle(field)
-    return field
+    field = list(range(1, 16))
+
+    # check if the field can be solved
+    while True:
+        random.shuffle(field)
+        pairs = 0
+        for i in range(0, 14):
+            for j in range(i+1, 15):
+                if field[i] > field[j]:
+                    pairs += 1
+        pairs += 4
+        if pairs % 2 == 0:
+            field.append(EMPTY_MARK)
+            return field
 
 
 def print_field(field):
@@ -38,6 +48,7 @@ def print_field(field):
     :param field: current field state to be printed.
     :return: None
     """
+
     for i in range(0, 15, 4):
         for element in field[i:i+4]:
             print ('{:^3}'.format(element)),
@@ -50,6 +61,7 @@ def is_game_finished(field):
     :param field: current field state.
     :return: True if the game is finished, False otherwise.
     """
+
     finished_state = list(range(1, 16))
     finished_state.append(EMPTY_MARK)
     if field == finished_state:
@@ -70,7 +82,7 @@ def perform_move(field, key):
     new_index = empty_index + MOVES[key]
 
     # new_index can be out of range or
-    # while moving left or right we should awoid change of row for new_index
+    # while moving left or right we should avoid change of row for new_index
     if new_index in range(0, 17) and \
         abs(new_index % 4 - empty_index % 4) != 3:
         field[empty_index], field[empty_index+MOVES[key]] = \
@@ -126,7 +138,7 @@ def main():
         except IndexError:
             print  ("Incorrect move!")
     if is_game_finished(field):
-        print("You've finished the game in {} moves")
+        print("You've finished the game in {} moves".format(total_moves))
 
 
 if __name__ == '__main__':
