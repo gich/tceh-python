@@ -64,9 +64,8 @@ def is_game_finished(field):
 
     finished_state = list(range(1, 16))
     finished_state.append(EMPTY_MARK)
-    if field == finished_state:
-        return True
-    return False
+
+    return field == finished_state
 
 
 def perform_move(field, key):
@@ -124,19 +123,17 @@ def main():
 
     field = shuffle_field()
     total_moves = 0
-    while True and not is_game_finished(field):
+    while not is_game_finished(field):
         print_field(field)
         try:
             move = handle_user_input()
+            perform_move(field, move)
+            total_moves += 1
         except KeyboardInterrupt:
             print('\nshutting down...')
             break
-
-        try:
-            perform_move(field, move)
-            total_moves += 1
         except IndexError:
-            print  ("Incorrect move!")
+            print ("Incorrect move!")
     if is_game_finished(field):
         print("You've finished the game in {} moves".format(total_moves))
 
