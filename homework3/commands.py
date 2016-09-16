@@ -17,7 +17,8 @@ from models import (
     BaseItem,
     ToDoItem,
     ToBuyItem,
-    ToReadItem
+    ToReadItem,
+    Storage
 )
 from utils import get_input_function
 
@@ -44,6 +45,14 @@ class BaseCommand(object):
         This method is called to run the command's logic.
         """
         raise NotImplemented()
+
+    @staticmethod
+    def _save(objects):
+        """
+        This method performs saving data to file
+        If saving is not needed override this method in child
+        """
+        Storage().save(objects)
 
 
 class ListCommand(BaseCommand):
@@ -112,61 +121,62 @@ class NewCommand(BaseCommand):
         objects.append(new_object)
         print('Added {}'.format(str(new_object)))
         print()
+        self._save(objects)
         return new_object
 
 
-class DoneCommand(BaseCommand):
+class DoneSwapCommand(BaseCommand):
+    @staticmethod
+    def label():
+        return 'doneswap'
+
+    def perform(self, objects, *args, **kwargs):
+        if len(objects) == 0:
+            print('There are no items in storage.')
+            return
+        if kwargs.get('done') is None:
+            print('Select item to swap status: ')
+        else:
+            mark = 'done' if kwargs['done'] == True else 'undone'
+            print('Select item to mark as {}:'.format(mark))
+        for index, obj in enumerate(objects):
+            if obj.done != kwargs.get('done'):
+                print('{}: {}'.format(index + 1, obj))
+
+        input_function = get_input_function()
+        selection = None
+
+        while True:
+            try:
+                selection = int(input_function('Input number: ')) - 1
+                break
+            except ValueError:
+                print('Bad input, try again.')
+        selected_obj = objects[selection]
+
+        if kwargs.get('done') is None:
+            selected_obj.done = not selected_obj.done
+        else:
+            selected_obj.done = kwargs['done']
+        self._save(objects)
+        
+
+class DoneCommand(DoneSwapCommand):
     @staticmethod
     def label():
         return 'done'
 
     def perform(self, objects, *args, **kwargs):
-        if len(objects) == 0:
-            print('There are no items in storage.')
-            return
-
-        print('Select item to mark as done:')
-        for index, obj in enumerate(objects):
-            print('{}: {}'.format(index + 1, obj))
-
-        input_function = get_input_function()
-        selection = None
-
-        while True:
-            try:
-                selection = int(input_function('Input number: ')) - 1
-                break
-            except ValueError:
-                print('Bad input, try again.')
-        selected_obj = objects[selection]
-        selected_obj.done = True
+        super(DoneCommand, self).perform(objects, done=True)
 
 
-class UndoneCommand(BaseCommand):
+class UndoneCommand(DoneSwapCommand):
     @staticmethod
     def label():
         return 'undone'
 
     def perform(self, objects, *args, **kwargs):
-        if len(objects) == 0:
-            print('There are no items in storage.')
-            return
-
-        print('Select item to mark as undone:')
-        for index, obj in enumerate(objects):
-            print('{}: {}'.format(index + 1, obj))
-
-        input_function = get_input_function()
-        selection = None
-
-        while True:
-            try:
-                selection = int(input_function('Input number: ')) - 1
-                break
-            except ValueError:
-                print('Bad input, try again.')
-        selected_obj = objects[selection]
-        selected_obj.done = False
+        super(UndoneCommand, self).perform(objects, done=False)
 
 
 class ExitCommand(BaseCommand):

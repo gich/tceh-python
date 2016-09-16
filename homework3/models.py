@@ -6,7 +6,10 @@ This module contains all the models we work with.
 
 __author__ = 'sobolevn'
 
+import pickle
 from utils import get_input_function
+
+PICKLE_FILE = "picklestore"
 
 
 class Storage(object):
@@ -22,8 +25,23 @@ class Storage(object):
     def __new__(cls, *args):
         if cls.obj is None:
             cls.obj = object.__new__(cls)
-            cls.items = []
+            cls.items = cls.__get_items_from_pickle()
         return cls.obj
+
+    @staticmethod
+    def __get_items_from_pickle():
+        items = None
+        with open(PICKLE_FILE) as fh:
+            try:
+                items = pickle.load(fh)
+            except EOFError:
+                items = []
+        return items
+
+    @classmethod
+    def save(cls, objects):
+        with open(PICKLE_FILE, 'w+') as fh:
+            pickle.dump(objects, fh)
 
 
 class BaseItem(object):

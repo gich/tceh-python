@@ -15,6 +15,7 @@ from commands import (
     ExitCommand,
     DoneCommand,
     UndoneCommand,
+    DoneSwapCommand,
     UserExitException,
 )
 from models import (
@@ -49,6 +50,7 @@ def get_routes():
         NewCommand.label(): NewCommand,
         DoneCommand.label(): DoneCommand,
         UndoneCommand.label(): UndoneCommand,
+        DoneSwapCommand.label(): DoneSwapCommand,
         ExitCommand.label(): ExitCommand,
 
     }
