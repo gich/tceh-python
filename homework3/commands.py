@@ -9,7 +9,6 @@ from __future__ import print_function
 
 import sys
 import inspect
-import json
 
 # import custom_exceptions
 from custom_exceptions import UserExitException

@@ -3,12 +3,12 @@
 """
 This module contains all the models we work with.
 """
+import pickle
+from utils import get_input_function
 
 __author__ = 'sobolevn'
 __modified_by__ = 'alex-px'
 
-import pickle
-from utils import get_input_function
 
 PICKLE_FILE = "picklestore"
 
