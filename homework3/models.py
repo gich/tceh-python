@@ -5,6 +5,7 @@ This module contains all the models we work with.
 """
 
 __author__ = 'sobolevn'
+__modified_by__ = 'alex-px'
 
 import pickle
 from utils import get_input_function
@@ -30,7 +31,6 @@ class Storage(object):
 
     @staticmethod
     def __get_items_from_pickle():
-        items = None
         with open(PICKLE_FILE) as fh:
             try:
                 items = pickle.load(fh)

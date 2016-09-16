@@ -10,12 +10,7 @@ import inspect
 import sys
 
 from commands import (
-    ListCommand,
-    NewCommand,
-    ExitCommand,
-    DoneCommand,
-    UndoneCommand,
-    DoneSwapCommand,
+    BaseCommand,
     UserExitException,
 )
 from models import (
@@ -24,6 +19,7 @@ from models import (
 from utils import get_input_function
 
 __author__ = 'sobolevn'
+__modified_by__ = 'alex-px'
 
 
 def get_routes():
@@ -33,27 +29,17 @@ def get_routes():
     """
 
     # Dynamic load:
-    # def class_filter(klass):
-    #     return inspect.isclass(klass) \
-    #            and klass.__module__ == BaseCommand.__module__ \
-    #            and issubclass(klass, BaseCommand) \
-    #            and klass is not BaseCommand
-    #
-    # routes = inspect.getmembers(
-    #     sys.modules[BaseCommand.__module__],
-    #     class_filter
-    # )
-    # return dict((route.label(), route) for _, route in routes)
+    def class_filter(klass):
+        return inspect.isclass(klass) \
+               and klass.__module__ == BaseCommand.__module__ \
+               and issubclass(klass, BaseCommand) \
+               and klass is not BaseCommand
 
-    return {
-        ListCommand.label(): ListCommand,
-        NewCommand.label(): NewCommand,
-        DoneCommand.label(): DoneCommand,
-        UndoneCommand.label(): UndoneCommand,
-        DoneSwapCommand.label(): DoneSwapCommand,
-        ExitCommand.label(): ExitCommand,
-
-    }
+    routes = inspect.getmembers(
+        sys.modules[BaseCommand.__module__],
+        class_filter
+    )
+    return dict((route.label(), route) for _, route in routes)
 
 
 def perform_command(command):
@@ -94,7 +80,7 @@ def parse_user_input():
 
 def main():
     """
-    Main method, works infinitelly until user runs `exit` command.
+    Main method, works infinitely until user runs `exit` command.
     Or hits `Ctrl+C` in the console.
     """
 

@@ -15,14 +15,12 @@ import json
 from custom_exceptions import UserExitException
 from models import (
     BaseItem,
-    ToDoItem,
-    ToBuyItem,
-    ToReadItem,
     Storage
 )
 from utils import get_input_function
 
 __author__ = 'sobolevn'
+__modified_by__ = 'alex-px'
 
 
 class BaseCommand(object):
@@ -77,21 +75,17 @@ class NewCommand(BaseCommand):
     @staticmethod
     def _load_item_classes():
         # Dynamic load:
-        # def class_filter(klass):
-        #     return inspect.isclass(klass) \
-        #            and klass.__module__ == BaseItem.__module__ \
-        #            and issubclass(klass, BaseItem) \
-        #            and klass is not BaseItem
-        #
-        # classes = inspect.getmembers(
-        #         sys.modules[BaseItem.__module__],
-        #         class_filter,
-        # )
-        classes = {
-            'ToDoItem': ToDoItem,
-            'ToBuyItem': ToBuyItem,
-            'ToReadItem': ToReadItem
-        }
+        def class_filter(klass):
+            return inspect.isclass(klass) \
+                   and klass.__module__ == BaseItem.__module__ \
+                   and issubclass(klass, BaseItem) \
+                   and klass is not BaseItem
+
+        classes = inspect.getmembers(
+                sys.modules[BaseItem.__module__],
+                class_filter,
+        )
+
         return dict(classes)
 
     def perform(self, objects, *args, **kwargs):
@@ -125,22 +119,21 @@ class NewCommand(BaseCommand):
         return new_object
 
 
-class DoneSwapCommand(BaseCommand):
+class DoneCommand(BaseCommand):
+    STATE = True
+
     @staticmethod
     def label():
-        return 'doneswap'
+        return 'done'
 
     def perform(self, objects, *args, **kwargs):
         if len(objects) == 0:
             print('There are no items in storage.')
             return
-        if kwargs.get('done') is None:
-            print('Select item to swap status: ')
-        else:
-            mark = 'done' if kwargs['done'] == True else 'undone'
-            print('Select item to mark as {}:'.format(mark))
+        mark = 'done' if self.__class__.STATE else 'undone'
+        print('Select item to mark as {}:'.format(mark))
         for index, obj in enumerate(objects):
-            if obj.done != kwargs.get('done'):
+            if obj.done != self.__class__.STATE:
                 print('{}: {}'.format(index + 1, obj))
 
         input_function = get_input_function()
@@ -153,30 +146,16 @@ class DoneSwapCommand(BaseCommand):
             except ValueError:
                 print('Bad input, try again.')
         selected_obj = objects[selection]
-
-        if kwargs.get('done') is None:
-            selected_obj.done = not selected_obj.done
-        else:
-            selected_obj.done = kwargs['done']
+        selected_obj.done = self.__class__.STATE
         self._save(objects)
-        
-
-class DoneCommand(DoneSwapCommand):
-    @staticmethod
-    def label():
-        return 'done'
-
-    def perform(self, objects, *args, **kwargs):
-        super(DoneCommand, self).perform(objects, done=True)
 
 
-class UndoneCommand(DoneSwapCommand):
+class UndoneCommand(DoneCommand):
+    STATE = False
+
     @staticmethod
     def label():
         return 'undone'
-
-    def perform(self, objects, *args, **kwargs):
-        super(UndoneCommand, self).perform(objects, done=False)
 
 
 class ExitCommand(BaseCommand):
