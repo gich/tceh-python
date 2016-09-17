@@ -9,7 +9,7 @@ def main():
     available_ships = {1: 4, 2: 3, 3: 2, 4: 1}  # {ship_decks: ships_num}
 
     field = Board(field_size, available_ships)
-    field.print_field()
+    field.print_field_friend()
     # field.print_field_enemy()
 
 
