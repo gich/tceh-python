@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from random import randint, choice
 from custom_exceptions import AlreadyShootedException
 
@@ -8,7 +9,7 @@ class Board(object):
     PRINT_MARKS = {
         0: '-',
         # 0: chr(149),  # '•',  # empty cell
-        1: '█',  # ship deck
+        1: 'H',  # ship deck
         2: '*',  # missed shot
         3: 'X',  # wounded
         4: '█',  # killed
@@ -85,7 +86,11 @@ class Board(object):
                     self.field[i][j] = 0
 
     def __hold_cells_around(self, ship):
-
+        """
+        Places dummy cells round the ship
+        :param ship: list of tuple(x, y) with coordinates
+        :return: None
+        """
         for s in ship:
             x_coord, y_coord = s
             for i in range(-1, 2):
@@ -98,7 +103,7 @@ class Board(object):
 
     def print_field_friend(self):
         """
-        Prints battle field to console with visible ship
+        Prints battle field to console with visible ships
         :return:
         """
         print()
@@ -129,7 +134,12 @@ class Board(object):
         print()
 
     def perform_shot(self, shot):
-
+        """
+        Handles the shot received
+        :param shot: Shot() from player
+        :return: 0 if player miss, or 1 if player hits the ship
+        :except: AlreadyShootedException if player repeat his shot
+        """
         if self.field[shot.row][shot.column] in [2, 3, 4]:
             raise AlreadyShootedException
         elif self.field[shot.row][shot.column] == 0:
@@ -143,6 +153,12 @@ class Board(object):
             return 1
 
     def __update_shooted_ships(self, coordinates):
+        """
+        Updates ships and killed_ships attributes in Board instance
+        and updates decks in wounded ship
+        :param coordinates: tuple(x, y) with wounded deck
+        :return:
+        """
         for ship in self.ships:
             if coordinates in ship.decks:
                 ship.killed_decks.append(coordinates)
