@@ -1,27 +1,24 @@
 # -*- coding: utf-8 -*-
 
 from random import randint, choice
-from custom_exceptions import AlreadyShootedException
+from custom_exceptions import AlreadyShotException
 
 
 class Board(object):
+    EMPTY = 0
+    SHIP = 1
+    MISSED = 2
+    WOUND = 3
+    KILLED = 4
+    DUMMY = 5
 
     PRINT_MARKS = {
-        0: '-',
-        # 0: chr(149),  # '•',  # empty cell
-        1: 'H',  # ship deck
-        2: '*',  # missed shot
-        3: 'X',  # wounded
-        4: '█',  # killed
-    }
-
-    PRINT_MARKS_ENEMY = {
-        0: '-',
-        # 0: '•',  # empty cell
-        1: '-',  # ship deck
-        2: '*',  # missed shot
-        3: 'X',  # wounded
-        4: '█',  # killed
+        EMPTY: '-',
+        # 0: chr(149),  # '•',
+        SHIP: 'H',
+        MISSED: '*',
+        WOUND: 'X',
+        KILLED: '█',
     }
 
     def __init__(self, size, ship_pref):
@@ -29,130 +26,129 @@ class Board(object):
         self.size = int(size)
         self.ships = []
         self.killed_ships = []
-        self.field = [[0] * self.size for _ in range(self.size)]
+        self.field = [[self.EMPTY] * self.size for _ in range(self.size)]
         self.__place_ships(ship_pref)
 
-    def __place_ships(self, ship_pref):
+    def __place_ships(self, all_ships):
         """
         Randomly places ships on field avoiding collisions
-        :param ship_pref: dict with available ships
+        :param all_ships: dict with available ships
         :return: None
         """
-        # get all available types of decks sorted desc
-        ship_decks = list(ship_pref.keys())
-        ship_decks.sort(reverse=True)
+        # get all available types of ships sorted desc
+        ship_types = list(all_ships.keys())
+        ship_types.sort(reverse=True)
 
-        for ship in ship_decks:
-            ship_count = ship_pref[ship]
-            while ship_count > 0:
+        for typ in ship_types:
+            for _ in range(all_ships[typ]):
+                ship = self.__place_ship_randomly(typ)
+
+                # surround ship with dummy cells to prevent collisions
+                self.__place_dummies_around(ship)
+
+                self.ships.append(ship)
+        self.__delete_dummies()
+
+    def __place_ship_randomly(self, decks_num):
+        pos_x = randint(0, self.size - 1)
+        pos_y = randint(0, self.size - 1)
+
+        # direction - vertical or horizontal delta
+        delta = choice([(0, 1), (1, 0)])
+
+        decks_coord = []
+        decks_to_place = decks_num
+
+        while decks_to_place > 0:
+            try:
+                if self.field[pos_x][pos_y] == self.EMPTY:
+                    self.field[pos_x][pos_y] = self.SHIP
+                    decks_coord.append((pos_x, pos_y))
+                    decks_to_place -= 1
+                    pos_x += delta[0]
+                    pos_y += delta[1]
+                else:  # cell already taken
+                    raise IndexError
+            except IndexError:  # trying to place ship behind borders
+                decks_to_place = decks_num
                 pos_x = randint(0, self.size - 1)
                 pos_y = randint(0, self.size - 1)
-                # direction delta stays unchanged for ship
-                delta = choice([(0, 1), (1, 0)])
+                for c in decks_coord:
+                    self.field[c[0]][c[1]] = self.EMPTY
+                    decks_coord = []
 
-                i = ship
-                current_ship = []
-                while i > 0:
-                    try:
-                        if self.field[pos_x][pos_y] == 0:
-                            self.field[pos_x][pos_y] = 1
-                            current_ship.append((pos_x, pos_y))
-                            i -= 1
-                            pos_x += delta[0]
-                            pos_y += delta[1]
-                        else:  # cell already taken
-                            i = ship
-                            pos_x = randint(0, self.size - 1)
-                            pos_y = randint(0, self.size - 1)
-                            for c in current_ship:
-                                self.field[c[0]][c[1]] = 0
-                            current_ship = []
-                    except IndexError:  # trying to place ship behind borders
-                        i = ship
-                        pos_x = randint(0, self.size - 1)
-                        pos_y = randint(0, self.size - 1)
-                        for c in current_ship:
-                            self.field[c[0]][c[1]] = 0
-                        current_ship = []
-                # surround ship with dummy cells to prevent collisions
-                self.__hold_cells_around(current_ship)
-                ship_count -= 1
-                self.ships.append(Ship(current_ship))
+        return Ship(decks_coord)
 
-        # delete dummy cells
-        for i in range(self.size):
-            for j in range(self.size):
-                if self.field[i][j] == 9:
-                    self.field[i][j] = 0
-
-    def __hold_cells_around(self, ship):
+    def __place_dummies_around(self, ship):
         """
         Places dummy cells round the ship
         :param ship: list of tuple(x, y) with coordinates
         :return: None
         """
-        for s in ship:
-            x_coord, y_coord = s
+        for deck_coord in ship.decks:
+            x_coord, y_coord = deck_coord
             for i in range(-1, 2):
                 for j in range(-1, 2):
                     try:
-                        if self.field[x_coord+i][y_coord+j] == 0:
-                            self.field[x_coord+i][y_coord+j] = 9
+                        if self.field[x_coord+i][y_coord+j] == self.EMPTY:
+                            self.field[x_coord+i][y_coord+j] = self.DUMMY
                     except IndexError:
                         pass
+
+    def __delete_dummies(self):
+        for i in range(self.size):
+            for j in range(self.size):
+                if self.field[i][j] == self.DUMMY:
+                    self.field[i][j] = self.EMPTY
+
+    def print_field(self, field_to_print):
+        print()
+        cols = list(range(1, 11))
+        cols = [' '] + list(map(str, cols))
+        print(" ".join(cols))
+        for i in range(self.size):
+            print(chr(65 + i), end=' ')
+            for j in range(self.size):
+                print(self.PRINT_MARKS[field_to_print[i][j]], end=" ")
+            print()
+        print()
 
     def print_field_friend(self):
         """
         Prints battle field to console with visible ships
         :return:
         """
-        print()
-        cols = list(range(1, 11))
-        cols = [' '] + list(map(str, cols))
-        print(" ".join(cols))
-        for i in range(self.size):
-            print(chr(65+i), end=' ')
-            for j in range(self.size):
-                print(self.PRINT_MARKS[self.field[i][j]], end=" ")
-            print()
-        print()
+        self.print_field(self.field)
 
     def print_field_enemy(self):
         """
         Prints battle field to console with hided ships
         :return:
         """
-        print()
-        cols = list(range(1, 11))
-        cols = [' '] + list(map(str, cols))
-        print(" ".join(cols))
-        for i in range(self.size):
-            print(chr(65+i), end=' ')
-            for j in range(self.size):
-                print(self.PRINT_MARKS_ENEMY[self.field[i][j]], end=" ")
-            print()
-        print()
+        self.print_field(self.secure_field)
 
-    def perform_shot(self, shot):
+    def handle_shot(self, shot):
         """
         Handles the shot received
         :param shot: Shot() from player
-        :return: 0 if player miss, or 1 if player hits the ship
-        :except: AlreadyShootedException if player repeat his shot
+        :return: False if player miss, or True if player hits the ship
+        :except: AlreadyShotException if player repeat his shot
         """
-        if self.field[shot.row][shot.column] in [2, 3, 4]:
-            raise AlreadyShootedException
+        if self.field[shot.row][shot.column] in [self.MISSED,
+                                                 self.KILLED,
+                                                 self.WOUND]:
+            raise AlreadyShotException
         elif self.field[shot.row][shot.column] == 0:
             self.field[shot.row][shot.column] = 2
             print('Missed!')
-            return 0
+            return False
         elif self.field[shot.row][shot.column] == 1:
             self.field[shot.row][shot.column] = 3
             print('Booooooom!!!!')
-            self.__update_shooted_ships((shot.row, shot.column))
-            return 1
+            self.__update_shot_ships((shot.row, shot.column))
+            return True
 
-    def __update_shooted_ships(self, coordinates):
+    def __update_shot_ships(self, coordinates):
         """
         Updates ships and killed_ships attributes in Board instance
         and updates decks in wounded ship
@@ -169,15 +165,63 @@ class Board(object):
                     )
                     for killed_deck in ship.killed_decks:
                         x, y = killed_deck
-                        self.field[x][y] = 4
+                        self.field[x][y] = self.KILLED
                     self.killed_ships.append(ship)
                     self.ships.remove(ship)
+
+    @property
+    def secure_field(self):
+        def hide(val):
+            return self.EMPTY if val == self.SHIP else val
+
+        secure_field = []
+        for row in self.field:
+            secure_field.append(list(map(hide, row)))
+
+        return secure_field
 
 
 class Player(object):
     def __init__(self, name):
         self.name = name
         self.is_player_turn = False
+
+    def perform_shot(self, board):
+        raise NotImplemented
+
+
+class Person(Player):
+    def perform_shot(self, board):
+        while True:
+            action = input("Your turn, {}: ".format(self.name))
+            try:
+                shot = Shot(action)
+                if not board.handle_shot(shot):
+                    break
+                else:
+                    board.print_field_enemy()
+
+            except AlreadyShotException:
+                print("You have already shot here. Try again.")
+                continue
+            except (ValueError, IndexError):
+                print('Bad input. Try again.')
+                continue
+
+
+class ComputerStupid(Player):
+    def perform_shot(self, board):
+        pass
+
+
+class ComputerSmart(Player):
+    def perform_shot(self, board):
+        pass
+
+
+class ComputerSuperSmart(Player):
+    def perform_shot(self, board):
+        pass
 
 
 class Ship(object):

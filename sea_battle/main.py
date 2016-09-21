@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from models import Board, Player, Shot
-from custom_exceptions import AlreadyShootedException
+from models import Board, Person, Shot
+from custom_exceptions import AlreadyShotException
 
 
 def main():
@@ -15,8 +15,8 @@ def main():
     field_size = 10
     available_ships = {1: 4, 2: 3, 3: 2, 4: 1}  # {ship_decks: ships_num}
 
-    player_1 = Player(input("Player one, enter your name: "))
-    player_2 = Player(input("Player two, enter your name: "))
+    player_1 = Person(input("Player one, enter your name: "))
+    player_2 = Person(input("Player two, enter your name: "))
 
     field_1 = Board(field_size, available_ships)
     field_2 = Board(field_size, available_ships)
@@ -35,20 +35,7 @@ def main():
                 active_field = field_1
 
             active_field.print_field_enemy()
-
-            action = input("Your turn, {}: ".format(active_player.name))
-            try:
-                # perform shot
-                shot = Shot(action)
-                if active_field.perform_shot(shot) == 1:
-                    continue
-
-            except AlreadyShootedException:
-                print("You have already shooted here. Try again.")
-                continue
-            except (ValueError, IndexError):
-                print('Bad input. Try again.')
-                continue
+            active_player.perform_shot(active_field)
 
             player_1.is_player_turn = not player_1.is_player_turn
             player_2.is_player_turn = not player_2.is_player_turn

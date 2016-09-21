@@ -3,5 +3,5 @@
 __author__ = 'alex-px'
 
 
-class AlreadyShootedException(IndexError):
+class AlreadyShotException(IndexError):
     pass
