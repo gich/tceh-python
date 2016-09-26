@@ -27,6 +27,8 @@ class Board(object):
         self.ships = []
         self.killed_ships = []
         self.field = [[self.EMPTY] * self.size for _ in range(self.size)]
+        self.letters = list([chr(x) for x in range(65, 65 + self.size)])
+        self.indexes = list(range(1, self.size + 1))
         self.__place_ships(ship_pref)
 
     def __place_ships(self, all_ships):
@@ -138,12 +140,12 @@ class Board(object):
                                                  self.KILLED,
                                                  self.WOUND]:
             raise AlreadyShotException
-        elif self.field[shot.row][shot.column] == 0:
-            self.field[shot.row][shot.column] = 2
+        elif self.field[shot.row][shot.column] == self.EMPTY:
+            self.field[shot.row][shot.column] = self.MISSED
             print('Missed!')
             return False
-        elif self.field[shot.row][shot.column] == 1:
-            self.field[shot.row][shot.column] = 3
+        elif self.field[shot.row][shot.column] == self.SHIP:
+            self.field[shot.row][shot.column] = self.WOUND
             print('Booooooom!!!!')
             self.__update_shot_ships((shot.row, shot.column))
             return True
@@ -160,7 +162,7 @@ class Board(object):
                 ship.killed_decks.append(coordinates)
                 ship.decks.remove(coordinates)
                 if len(ship.decks) == 0:
-                    print("The {}-deck ship is killed".format(
+                    print("The {}-deck ship has been killed".format(
                         len(ship.killed_decks))
                     )
                     for killed_deck in ship.killed_decks:
@@ -187,31 +189,32 @@ class Player(object):
         self.is_player_turn = False
 
     def perform_shot(self, board):
+        """
+        Returns Shot based on user input or algorithm
+        :param board:
+        :return: Shot()
+        """
         raise NotImplemented
 
 
 class Person(Player):
     def perform_shot(self, board):
         while True:
-            action = input("Your turn, {}: ".format(self.name))
+            str_input = input("Your turn, {}: ".format(self.name))
             try:
-                shot = Shot(action)
-                if not board.handle_shot(shot):
-                    break
-                else:
-                    board.print_field_enemy()
-
-            except AlreadyShotException:
-                print("You have already shot here. Try again.")
-                continue
-            except (ValueError, IndexError):
+                return Shot(str_input)
+            except (ValueError, TypeError):
                 print('Bad input. Try again.')
                 continue
 
 
 class ComputerStupid(Player):
     def perform_shot(self, board):
-        pass
+        letter = choice(board.letters)
+        index = str(choice(board.indexes))
+        str_shot = letter + index
+        print('My shot is: {}'.format(str_shot))
+        return Shot(str_shot)
 
 
 class ComputerSmart(Player):
@@ -231,9 +234,9 @@ class Ship(object):
 
 
 class Shot(object):
-    def __init__(self, action):
-        _row = ord(action[:1].upper()) - 65
-        _column = int(action[1:]) - 1
+    def __init__(self, str_input):
+        _row = ord(str_input[:1].upper()) - 65
+        _column = int(str_input[1:]) - 1
         if _row < 0 or _column < 0:
             raise ValueError
         self.row = _row

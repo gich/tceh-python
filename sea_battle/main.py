@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from models import Board, Person, Shot
+from models import (
+                    Board,
+                    Person,
+                    Shot,
+                    ComputerStupid
+                    )
 from custom_exceptions import AlreadyShotException
 
 
@@ -15,30 +20,33 @@ def main():
     field_size = 10
     available_ships = {1: 4, 2: 3, 3: 2, 4: 1}  # {ship_decks: ships_num}
 
-    player_1 = Person(input("Player one, enter your name: "))
-    player_2 = Person(input("Player two, enter your name: "))
+    active_player = Person(input("Player one, enter your name: "))
+    # player_2 = Person(input("Player two, enter your name: "))
+    player_2 = ComputerStupid('Not smart')
 
-    field_1 = Board(field_size, available_ships)
+    active_field = Board(field_size, available_ships)
     field_2 = Board(field_size, available_ships)
 
-    player_1.is_player_turn = True
-    active_player = player_1
-    active_field = field_2
-
-    while len(field_1.ships) > 0 and len(field_2.ships) > 0:
+    # We play till all ships are killed
+    while len(active_field.ships) > 0 and len(field_2.ships) > 0:
         try:
-            if player_1.is_player_turn:
-                active_player = player_1
-                active_field = field_2
-            else:
-                active_player = player_2
-                active_field = field_1
-
             active_field.print_field_enemy()
-            active_player.perform_shot(active_field)
+            while True:
+                try:
+                    shot = active_player.perform_shot(active_field)
+                    if not active_field.handle_shot(shot):
+                        break
+                    else:
+                        active_field.print_field_enemy()
+                except AlreadyShotException:
+                    print("You have already shot here. Try again.")
+                    continue
+                except IndexError:
+                    print('Bad input. Try again.')
+                    continue
+            active_player, player_2 = player_2, active_player
+            active_field, field_2 = field_2, active_field
 
-            player_1.is_player_turn = not player_1.is_player_turn
-            player_2.is_player_turn = not player_2.is_player_turn
         except KeyboardInterrupt:
             if input("Are you sure you want to quit? (y/n): ") == 'y':
                 print('Bye...')
@@ -48,10 +56,7 @@ def main():
     print('The winner is ----------------> {}'.format(active_player.name))
 
     # print field for looser
-    if active_field == field_1:
-        field_2.print_field_friend()
-    else:
-        field_1.print_field_friend()
+    field_2.print_field_friend()
 
 
 if __name__ == '__main__':
