@@ -14,7 +14,6 @@ class Board(object):
 
     PRINT_MARKS = {
         EMPTY: '-',
-        # 0: chr(149),  # '•',
         SHIP: 'H',
         MISSED: '*',
         WOUND: 'X',
